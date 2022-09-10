@@ -57,6 +57,14 @@ app.get("/user/tweets/feed/", authenticateToken, async (request, response) => {
   const dbUser = await db.get(selectUserQuery);
   response.send(dbUser);
 });
+
+app.get("/user/following/", authenticateToken, async (request, response) => {
+  let { username } = request;
+  console.log(username);
+  const selectUserQuery = `SELECT following_user_id FROM user INNER JOIN follower ON user.user_id = follower.follower_user_id WHERE username = '${username}'; `;
+  const dbUser = await db.get(selectUserQuery);
+  response.send(dbUser);
+});
 // User Register API
 const validatePassword = (password) => {
   return password.length > 5;
