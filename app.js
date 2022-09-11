@@ -53,7 +53,7 @@ const authenticateToken = (request, response, next) => {
 app.get("/user/tweets/feed/", authenticateToken, async (request, response) => {
   let { username } = request;
   console.log(username);
-  const selectUserQuery = `SELECT username,tweet,date_time  FROM user JOIN tweet LIMIT 4; `;
+  const selectUserQuery = `SELECT username,tweet,date_time  FROM user JOIN tweet  LIMIT 4; `;
   const dbUser = await db.get(selectUserQuery);
   response.send(dbUser);
 });
@@ -61,10 +61,103 @@ app.get("/user/tweets/feed/", authenticateToken, async (request, response) => {
 app.get("/user/following/", authenticateToken, async (request, response) => {
   let { username } = request;
   console.log(username);
-  const selectUserQuery = `SELECT following_user_id FROM user INNER JOIN follower ON user.user_id = follower.follower_user_id WHERE username = '${username}'; `;
+  const selectUserQuery = `SELECT username FROM user JOIN follower WHERE user_id =follower_user_id ; `;
   const dbUser = await db.get(selectUserQuery);
   response.send(dbUser);
 });
+
+app.get("/user/followers/", authenticateToken, async (request, response) => {
+  let { username } = request;
+  console.log(username);
+  const selectUserQuery = `SELECT username FROM user JOIN follower WHERE user_id =follower_user_id ; `;
+  const dbUser = await db.get(selectUserQuery);
+  response.send(dbUser);
+});
+
+app.get("/tweets/:tweetId/", authenticateToken, async (request, response) => {
+  const { tweetId } = request.params;
+  try {
+    const getBookQuery = `
+      SELECT tweet,COUNT(user_id) AS likes,COUNT(user_id) AS replies,date_time AS dateTime FROM tweet  WHERE tweet_id=${tweetId};
+    `;
+    const book = await db.get(getBookQuery);
+    response.send(book);
+  } catch (e) {
+    response.status(401);
+    response.send("Invalid Request");
+  }
+});
+
+app.get(
+  "/tweets/:tweetId/likes",
+  authenticateToken,
+  async (request, response) => {
+    const { tweetId } = request.params;
+    try {
+      const getBookQuery = `
+      SELECT username AS likes  FROM user JOIN like  WHERE tweet_id=${tweetId};
+    `;
+      const book = await db.get(getBookQuery);
+      response.send(book);
+    } catch (e) {
+      response.status(401);
+      response.send("Invalid Request");
+    }
+  }
+);
+
+app.get(
+  "/tweets/:tweetId/replies",
+  authenticateToken,
+  async (request, response) => {
+    const { tweetId } = request.params;
+
+    const getBookQuery = `
+      SELECT username AS name ,reply  FROM user JOIN reply  WHERE tweet_id=${tweetId};
+    `;
+    const book = await db.get(getBookQuery);
+    response.send(book);
+  }
+);
+
+app.get("/user/tweets/", authenticateToken, async (request, response) => {
+  const { username } = request;
+
+  const getBookQuery = `
+      SELECT tweet ,count(like_id),count(reply_id)  FROM user NATURAL JOIN reply NATURAL JOIN like NATURAL JOIN tweet WHERE username=${username};
+    `;
+  const book = await db.get(getBookQuery);
+  response.send(book);
+});
+
+app.post("/user/tweets/", authenticateToken, async (request, response) => {
+  const { tweet } = request.body;
+  const createMoviesQuery = ` INSERT INTO tweet(tweet) 
+    VALUES('${tweet}');`;
+  const createQueryResponse = await db.run(createMoviesQuery);
+  response.send("Created a Tweet");
+});
+
+app.delete(
+  "/tweets/:tweetId/",
+  authenticateToken,
+  async (request, response) => {
+    const { tweetId } = request.params;
+    try {
+      const deleteQuery = `
+  DELETE FROM
+    tweet
+  WHERE
+    tweet_id = ${tweetId};`;
+      await database.run(deleteQuery);
+      response.send("Tweet Removed");
+    } catch (e) {
+      response.status(401);
+      response.send("Invalid Request");
+    }
+  }
+);
+
 // User Register API
 const validatePassword = (password) => {
   return password.length > 5;
