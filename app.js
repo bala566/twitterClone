@@ -53,8 +53,8 @@ const authenticateToken = (request, response, next) => {
 app.get("/user/tweets/feed/", authenticateToken, async (request, response) => {
   let { username } = request;
   console.log(username);
-  const selectUserQuery = `SELECT username,tweet,date_time  FROM user JOIN tweet  LIMIT 4; `;
-  const dbUser = await db.get(selectUserQuery);
+  const selectUserQuery = `SELECT username,tweet,date_time as dateTime FROM user JOIN tweet  LIMIT 4; `;
+  const dbUser = await db.all(selectUserQuery);
   response.send(dbUser);
 });
 
