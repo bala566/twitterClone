@@ -53,6 +53,7 @@ const authenticateToken = (request, response, next) => {
 app.get("/user/tweets/feed/", authenticateToken, async (request, response) => {
   let { username } = request;
   console.log(username);
+  let userId = `SELECT user_id FROM user WHERE username='${username}';`;
   const selectUserQuery = `SELECT 
     user.username, tweet.tweet, tweet.date_time AS dateTime
   FROM
@@ -62,7 +63,7 @@ app.get("/user/tweets/feed/", authenticateToken, async (request, response) => {
   INNER JOIN user
     ON tweet.user_id = user.user_id
   WHERE 
-    follower.follower_user_id = ${2}
+    follower.follower_user_id = ${userId}
   ORDER BY 
     tweet.date_time DESC
   LIMIT 4;`;
